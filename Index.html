@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo Neón Pro</title>
+    <style>
+        :root {
+            --primario: #b5e61d;
+            --oscuro-bg: #1a1c1d;
+            --oscuro-card: #2b2d2f;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            background: var(--oscuro-bg); 
+            color: white;
+            padding-bottom: 100px;
+        }
+        
+        header { 
+            background: var(--oscuro-card); 
+            color: var(--primario); 
+            padding: 2rem 1rem; 
+            text-align: center; 
+            border-bottom: 3px solid var(--primario);
+            box-shadow: 0 0 15px rgba(181, 230, 29, 0.3);
+        }
+
+        .contenedor { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Buscador Ajustado para POCO M6 */
+        #buscador {
+            padding: 10px 15px;
+            width: 85%;
+            max-width: 350px;
+            border-radius: 12px;
+            background: var(--oscuro-card);
+            border: 1.5px solid var(--primario);
+            color: white;
+            font-size: 16px; /* Evita zoom forzado en móviles */
+            outline: none;
+            display: block;
+            margin: 0 auto 30px auto;
+        }
+
+        /* Galería */
+        .galeria { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 20px; 
+        }
+
+        .producto { 
+            background: var(--oscuro-card); 
+            border-radius: 15px; 
+            overflow: hidden; 
+            border: 1px solid #3d3f41;
+            text-align: center;
+        }
+
+        .producto img { 
+            width: 100%; 
+            height: 180px; 
+            object-fit: cover; 
+            cursor: zoom-in; 
+        }
+
+        .precio { color: var(--primario); font-weight: bold; font-size: 1.2rem; margin: 10px 0; }
+
+        .btn-add {
+            background: var(--primario);
+            color: var(--oscuro-bg);
+            border: none;
+            padding: 12px;
+            width: 90%;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* MODAL DE ZOOM Y EFECTO BRILLO */
+        .modal-zoom {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .contenedor-foto-zoom {
+            position: relative;
+            max-width: 90%;
+            max-height: 80%;
+            overflow: hidden;
+            border-radius: 10px;
+            border: 2px solid var(--primario);
+            box-shadow: 0 0 25px var(--primario);
+        }
+
+        .modal-zoom img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        /* El rayo de luz (brillo) */
+        .contenedor-foto-zoom::after {
+            content: "";
+            position: absolute;
+            top: 0; left: -150%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+            transform: skewX(-25deg);
+            animation: brillo 2s infinite;
+        }
+
+        @keyframes brillo {
+            0% { left: -150%; }
+            100% { left: 150%; }
+        }
+
+        /* Carrito */
+        .carrito-flotante {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--oscuro-card);
+            padding: 15px 25px;
+            border-top: 2px solid var(--primario);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 20px;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>MI TIENDA CUSTOM</h1>
+</header>
+
+<div class="contenedor">
+    <input type="text" id="buscador" placeholder="🔍 Buscar...">
+    <div class="galeria" id="catalogo"></div>
+</div>
+
+<div id="modalZoom" class="modal-zoom" onclick="this.style.display='none'">
+    <div class="contenedor-foto-zoom">
+        <img id="imgAmpliada" src="" alt="Zoom">
+    </div>
+</div>
+
+<div class="carrito-flotante">
+    <strong>🛒 Carrito: <span id="cuenta" style="color:var(--primario)">0</span></strong>
+    <a href="#" id="enviar-pedido" class="btn-whatsapp" target="_blank">Pedir</a>
+</div>
+
+<script>
+    const productos = [
+        { id: 1, nombre: "Taza Tech", precio: 15, img: "https://picsum.photos/seed/tech1/600/600" },
+        { id: 2, nombre: "Camiseta Neón", precio: 25, img: "https://picsum.photos/seed/tech2/600/600" },
+        { id: 3, nombre: "Llavero LED", precio: 10, img: "https://picsum.photos/seed/tech3/600/600" },
+        { id: 4, nombre: "Mousepad Pro", precio: 30, img: "https://picsum.photos/seed/tech4/600/600" }
+    ];
+
+    let carrito = [];
+    const miTelefono = "1234567890"; // Reemplaza con tu número
+
+    function render(lista) {
+        const cat = document.getElementById('catalogo');
+        cat.innerHTML = '';
+        lista.forEach(p => {
+            cat.innerHTML += `
+                <div class="producto">
+                    <img src="${p.img}" alt="${p.nombre}" onclick="abrirZoom('${p.img}')">
+                    <div class="info-prod">
+                        <h3>${p.nombre}</h3>
+                        <p class="precio">$${p.precio}</p>
+                        <button class="btn-add" onclick="add(${p.id})">Añadir</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    window.abrirZoom = function(url) {
+        const modal = document.getElementById('modalZoom');
+        document.getElementById('imgAmpliada').src = url;
+        modal.style.display = 'flex';
+    }
+
+    window.add = function(id) {
+        const item = productos.find(p => p.id === id);
+        carrito.push(item);
+        actualizar();
+    }
+
+    function actualizar() {
+        document.getElementById('cuenta').innerText = carrito.length;
+        const btn = document.getElementById('enviar-pedido');
+        if(carrito.length > 0) {
+            btn.style.display = 'block';
+            let msg = "Hola! Quiero pedir: ";
+            carrito.forEach(i => msg += i.nombre + ", ");
+            btn.href = `https://wa.me/${miTelefono}?text=${encodeURIComponent(msg)}`;
+        }
+    }
+
+    document.getElementById('buscador').addEventListener('input', (e) => {
+        const f = productos.filter(p => p.nombre.toLowerCase().includes(e.target.value.toLowerCase()));
+        render(f);
+    });
+
+    render(productos);
+</script>
+</body>
+</html>
