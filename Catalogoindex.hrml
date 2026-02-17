@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda de Personalizados</title>
+    <style>
+        :root {
+            --primario: #6c5ce7;
+            --secundario: #a29bfe;
+            --exito: #2ecc71;
+            --peligro: #ff7675;
+            --oscuro: #2d3436;
+            --claro: #f1f2f6;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            background: var(--claro); 
+            padding-bottom: 100px; /* Espacio para el carrito flotante */
+        }
+        
+        header { 
+            background: var(--primario); 
+            color: white; 
+            padding: 3rem 1rem; 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .contenedor { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* Controles: Buscador y Filtros */
+        .controles {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        #buscador {
+            padding: 12px 20px;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 25px;
+            border: 2px solid var(--secundario);
+            font-size: 1rem;
+            outline: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        /* Galería */
+        .galeria { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 25px; 
+        }
+
+        .producto { 
+            background: white; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .producto:hover { transform: translateY(-5px); }
+
+        .producto img { width: 100%; height: 200px; object-fit: cover; }
+
+        .info-prod { padding: 1.5rem; text-align: center; flex-grow: 1; }
+        
+        .precio { color: var(--primario); font-weight: bold; font-size: 1.4rem; margin: 10px 0; }
+
+        .btn-add {
+            background: var(--primario);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.3s;
+        }
+
+        .btn-add:hover { background: var(--secundario); }
+
+        /* Carrito Flotante */
+        .carrito-flotante {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 25px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .btn-whatsapp {
+            background: var(--exito);
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            display: none; 
+        }
+
+        /* Animaciones */
+        .notificacion-vuelo {
+            position: fixed;
+            background: var(--primario);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 2000;
+            animation: volar 0.8s ease-out forwards;
+        }
+
+        @keyframes volar {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-100px); }
+        }
+
+        .pulso { animation: sacudir 0.3s ease-in-out; }
+        @keyframes sacudir {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); color: var(--exito); }
+            100% { transform: scale(1); }
+        }
+
+        .btn-vaciar {
+            background: none;
+            border: none;
+            color: var(--peligro);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>✨ Mi Tienda Personalizada</h1>
+    <p>Calidad y diseño exclusivo a un clic</p>
+</header>
+
+<div class="contenedor">
+    <div class="controles">
+        <input type="text" id="buscador" placeholder="🔍 ¿Qué estás buscando hoy?">
+    </div>
+
+    <div class="galeria" id="catalogo">
+        </div>
+</div>
+
+<div class="carrito-flotante">
+    <div>
+        <strong>🛒 Carrito:</strong> <span id="cuenta-carrito">0</span> items
+        <button onclick="vaciarCarrito()" class="btn-vaciar">Vaciar carrito</button>
+    </div>
+    <a href="#" id="enviar-pedido" class="btn-whatsapp" target="_blank">
+        Enviar Pedido por WhatsApp
+    </a>
+</div>
+
+<script>
+    // 1. Datos de productos (Edita esto para cambiar tus productos)
+    const productos = [
+        { id: 1, nombre: "Taza Galaxia", precio: 15, img: "https://picsum.photos/seed/taza/300/200" },
+        { id: 2, nombre: "Camiseta Gamer", precio: 25, img: "https://picsum.photos/seed/shirt/300/200" },
+        { id: 3, nombre: "Llavero Foto", precio: 10, img: "https://picsum.photos/seed/key/300/200" },
+        { id: 4, nombre: "Cuadro Canvas", precio: 45, img: "https://picsum.photos/seed/art/300/200" },
+        { id: 5, nombre: "Gorra Custom", precio: 18, img: "https://picsum.photos/seed/cap/300/200" }
+    ];
+
+    // 2. Cargar carrito desde LocalStorage
+    let carrito = JSON.parse(localStorage.getItem('pedido_guardado')) || [];
+    const miTelefono = "1234567890"; // Reemplaza con tu número real
+
+    // 3. Función para mostrar productos en pantalla
+    function renderizar(lista) {
+        const contenedor = document.getElementById('catalogo');
+        contenedor.innerHTML = '';
+        lista.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'producto';
+            div.innerHTML = `
+                <img src="${p.img}" alt="${p.nombre}">
+                <div class="info-prod">
+                    <h3>${p.nombre}</h3>
+                    <p class="precio">$${p.precio}</p>
+                    <button class="btn-add" onclick="agregarAlCarrito(${p.id}, event)">Añadir al carrito</button>
+                </div>
+            `;
+            contenedor.appendChild(div);
+        });
+    }
+
+    // 4. Lógica del Carrito
+    function agregarAlCarrito(id, e) {
+        const item = productos.find(p => p.id === id);
+        carrito.push(item);
+        
+        animarVuelo(e);
+        actualizarUI();
+    }
+
+    function vaciarCarrito() {
+        if(carrito.length > 0 && confirm("¿Deseas limpiar tu carrito?")) {
+            carrito = [];
+            actualizarUI();
+        }
+    }
+
+    function actualizarUI() {
+        const cuenta = document.getElementById('cuenta-carrito');
+        const btnPedido = document.getElementById('enviar-pedido');
+        
+        // Guardar en memoria
+        localStorage.setItem('pedido_guardado', JSON.stringify(carrito));
+        
+        // Actualizar contador con animación
+        cuenta.innerText = carrito.length;
+        cuenta.classList.add('pulso');
+        setTimeout(() => cuenta.classList.remove('pulso'), 300);
+        
+        if(carrito.length > 0) {
+            btnPedido.style.display = 'block';
+            
+            // Crear mensaje de WhatsApp
+            let total = 0;
+            let listaTexto = "Hola! Quisiera los siguientes productos:%0A";
+            carrito.forEach(item => {
+                listaTexto += `- ${item.nombre} ($${item.precio})%0A`;
+                total += item.precio;
+            });
+            listaTexto += `%0A*TOTAL A PAGAR: $${total}*`;
+            btnPedido.href = `https://wa.me/${miTelefono}?text=${listaTexto}`;
+        } else {
+            btnPedido.style.display = 'none';
+        }
+    }
+
+    // 5. Animación de "Añadido"
+    function animarVuelo(e) {
+        const fly = document.createElement('div');
+        fly.className = 'notificacion-vuelo';
+        fly.innerText = '¡Añadido! +1';
+        fly.style.left = `${e.clientX}px`;
+        fly.style.top = `${e.clientY}px`;
+        document.body.appendChild(fly);
+        setTimeout(() => fly.remove(), 800);
+    }
+
+    // 6. Buscador en tiempo real
+    document.getElementById('buscador').addEventListener('input', (e) => {
+        const busqueda = e.target.value.toLowerCase();
+        const filtrados = productos.filter(p => p.nombre.toLowerCase().includes(busqueda));
+        renderizar(filtrados);
+    });
+
+    // Inicio de la App
+    renderizar(productos);
+    actualizarUI();
+</script>
+
+</body>
+</html>
